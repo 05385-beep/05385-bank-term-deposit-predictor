@@ -3,7 +3,7 @@ import joblib
 
 from ml_pipeline.data_loader import BankMarketingLoader
 from ml_pipeline.feature_builder import FeaturePipelineBuilder
-from ml_pipeline.model_trainer import KNNModel
+from ml_pipeline.model_trainer import KNNModel, DecisionTreeModel
 from ml_pipeline.model_metrics import BinaryClassificationMetrics
 
 
@@ -54,6 +54,29 @@ def run_knn_pipeline():
     knn.save("saved_models/knn_model.pkl")
     joblib.dump(pipeline, "saved_models/knn_pipeline.pkl")
 
+    # ------------------------------------------------
+    # Decision Tree
+    # ------------------------------------------------
+    dt = DecisionTreeModel(max_depth=6)
+    dt.build()
+    dt.train(X_train_transformed, y_train)
+
+    y_pred_dt = dt.predict(X_test_transformed)
+    y_prob_dt = dt.predict_proba(X_test_transformed)
+
+    metrics_dt = BinaryClassificationMetrics.evaluate(
+        y_test, y_pred_dt, y_prob_dt
+    )
+
+    print("\nDecision Tree Metrics")
+    print("-" * 30)
+    for k, v in metrics_dt.items():
+        print(f"{k}: {v:.4f}")
+
+    dt.save("saved_models/dt_model.pkl")
+
+    # Save pipeline once
+    joblib.dump(pipeline, "saved_models/knn_pipeline.pkl")
 
 if __name__ == "__main__":
     run_knn_pipeline()
