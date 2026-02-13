@@ -3,11 +3,11 @@ import joblib
 
 from ml_pipeline.data_loader import BankMarketingLoader
 from ml_pipeline.feature_builder import FeaturePipelineBuilder
-from ml_pipeline.model_trainer import KNNModel, DecisionTreeModel, LogisticRegressionModel
+from ml_pipeline.model_trainer import KNNModel, DecisionTreeModel, LogisticRegressionModel, RandomForestModel
 from ml_pipeline.model_metrics import BinaryClassificationMetrics
 
 
-def run_knn_pipeline():
+def train_all_models():
     """
     Executes end-to-end KNN training and evaluation.
     """
@@ -29,16 +29,16 @@ def run_knn_pipeline():
     X_train_transformed = pipeline.fit_transform(X_train)
     X_test_transformed = pipeline.transform(X_test)
 
-    # 5. Train KNN model
+    #Train KNN model
     knn = KNNModel(neighbors=5)
     knn.build()
     knn.train(X_train_transformed, y_train)
 
-    # 6. Predictions
+    # Predictions
     y_pred = knn.predict(X_test_transformed)
     y_prob = knn.predict_proba(X_test_transformed)
 
-    # 7. Evaluation
+    # Evaluation
     metrics = BinaryClassificationMetrics.evaluate(
         y_test, y_pred, y_prob
     )
@@ -50,9 +50,8 @@ def run_knn_pipeline():
 
     # 8. Save model and preprocessing pipeline
     os.makedirs("saved_models", exist_ok=True)
-
     knn.save("saved_models/knn_model.pkl")
-    joblib.dump(pipeline, "saved_models/knn_pipeline.pkl")
+  
 
     # ------------------------------------------------
     # Decision Tree
@@ -75,9 +74,6 @@ def run_knn_pipeline():
 
     dt.save("saved_models/dt_model.pkl")
 
-    # Save pipeline once
-    joblib.dump(pipeline, "saved_models/knn_pipeline.pkl")
-    
     # ==============================
     # Logistic Regression
     # ==============================
@@ -99,9 +95,24 @@ def run_knn_pipeline():
 
     lr.save("saved_models/lr_model.pkl")
 
-    # Save pipeline
-    joblib.dump(pipeline, "saved_models/knn_pipeline.pkl")
+    # ==============================
+    # Random Forest
+    # ==============================
+    rf = RandomForestModel(n_estimators=200)
+    rf.build()
+    rf.train(X_train_transformed, y_train)
+    y_pred_rf = rf.predict(X_test_transformed)
+    y_prob_rf = rf.predict_proba(X_test_transformed)
+    metrics_rf = BinaryClassificationMetrics.evaluate(y_test, y_pred_rf, y_prob_rf)
+
+    print("\nRandom Forest Metrics")
+    print("-" * 30)
+    for k, v in metrics_rf.items():
+        print(f"{k}: {v:.4f}")
+    rf.save("saved_models/rf_model.pkl")
+
+    joblib.dump(pipeline, "saved_models/preprocessing_pipeline.pkl")   
 
 if __name__ == "__main__":
-    run_knn_pipeline()
+    train_all_models()
 
