@@ -3,7 +3,7 @@ import joblib
 
 from ml_pipeline.data_loader import BankMarketingLoader
 from ml_pipeline.feature_builder import FeaturePipelineBuilder
-from ml_pipeline.model_trainer import KNNModel, DecisionTreeModel
+from ml_pipeline.model_trainer import KNNModel, DecisionTreeModel, LogisticRegressionModel
 from ml_pipeline.model_metrics import BinaryClassificationMetrics
 
 
@@ -77,6 +77,31 @@ def run_knn_pipeline():
 
     # Save pipeline once
     joblib.dump(pipeline, "saved_models/knn_pipeline.pkl")
+    
+    # ==============================
+    # Logistic Regression
+    # ==============================
+    lr = LogisticRegressionModel()
+    lr.build()
+    lr.train(X_train_transformed, y_train)
+
+    y_pred_lr = lr.predict(X_test_transformed)
+    y_prob_lr = lr.predict_proba(X_test_transformed)
+
+    metrics_lr = BinaryClassificationMetrics.evaluate(
+        y_test, y_pred_lr, y_prob_lr
+    )
+
+    print("\nLogistic Regression Metrics")
+    print("-" * 30)
+    for k, v in metrics_lr.items():
+        print(f"{k}: {v:.4f}")
+
+    lr.save("saved_models/lr_model.pkl")
+
+    # Save pipeline
+    joblib.dump(pipeline, "saved_models/knn_pipeline.pkl")
 
 if __name__ == "__main__":
     run_knn_pipeline()
+

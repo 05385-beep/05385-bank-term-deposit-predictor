@@ -1,5 +1,6 @@
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
 import joblib
 
 
@@ -43,6 +44,32 @@ class DecisionTreeModel:
     def build(self):
         self.model = DecisionTreeClassifier(
             max_depth=self.max_depth,
+            random_state=self.random_state
+        )
+        return self.model
+
+    def train(self, X_train, y_train):
+        self.model.fit(X_train, y_train)
+
+    def predict(self, X_test):
+        return self.model.predict(X_test)
+
+    def predict_proba(self, X_test):
+        return self.model.predict_proba(X_test)[:, 1]
+
+    def save(self, path):
+        joblib.dump(self.model, path)
+# ------------------------------------------------
+# Logistic Regression Model
+# ------------------------------------------------
+class LogisticRegressionModel:
+    def __init__(self, random_state=42):
+        self.random_state = random_state
+        self.model = None
+
+    def build(self):
+        self.model = LogisticRegression(
+            max_iter=1000,
             random_state=self.random_state
         )
         return self.model
