@@ -3,7 +3,7 @@ import joblib
 
 from ml_pipeline.data_loader import BankMarketingLoader
 from ml_pipeline.feature_builder import FeaturePipelineBuilder
-from ml_pipeline.model_trainer import KNNModel, DecisionTreeModel, LogisticRegressionModel, RandomForestModel
+from ml_pipeline.model_trainer import KNNModel, DecisionTreeModel, LogisticRegressionModel, RandomForestModel, XGBoostModel
 from ml_pipeline.model_metrics import BinaryClassificationMetrics
 
 
@@ -110,6 +110,28 @@ def train_all_models():
     for k, v in metrics_rf.items():
         print(f"{k}: {v:.4f}")
     rf.save("saved_models/rf_model.pkl")
+
+    # ==============================
+    # XGBoost
+    # ==============================
+    xgb = XGBoostModel()
+    xgb.build()
+    xgb.train(X_train_transformed, y_train)
+
+    y_pred_xgb = xgb.predict(X_test_transformed)
+    y_prob_xgb = xgb.predict_proba(X_test_transformed)
+
+    metrics_xgb = BinaryClassificationMetrics.evaluate(
+        y_test, y_pred_xgb, y_prob_xgb
+    )
+
+    print("\nXGBoost Metrics")
+    print("-" * 30)
+    for k, v in metrics_xgb.items():
+        print(f"{k}: {v:.4f}")
+
+    xgb.save("saved_models/xgb_model.pkl")
+
 
     joblib.dump(pipeline, "saved_models/preprocessing_pipeline.pkl")   
 

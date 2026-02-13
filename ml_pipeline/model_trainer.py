@@ -2,6 +2,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 import joblib
 
 
@@ -114,3 +115,35 @@ class RandomForestModel:
 
     def save(self, path):
         joblib.dump(self.model, path)
+# ------------------------------------------------
+# XGBoost Model
+# ------------------------------------------------
+class XGBoostModel:
+    def __init__(self, random_state=42):
+        self.random_state = random_state
+        self.model = None
+
+    def build(self):
+        self.model = XGBClassifier(
+            n_estimators=300,
+            learning_rate=0.05,
+            max_depth=5,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            eval_metric="logloss",
+            random_state=self.random_state,
+            n_jobs=-1
+        )
+        return self.model
+
+    def train(self, X_train, y_train):
+        self.model.fit(X_train, y_train)
+
+    def predict(self, X_test):
+        return self.model.predict(X_test)
+
+    def predict_proba(self, X_test):
+        return self.model.predict_proba(X_test)[:, 1]
+
+    def save(self, path):
+        joblib.dump(self.model, path) 
