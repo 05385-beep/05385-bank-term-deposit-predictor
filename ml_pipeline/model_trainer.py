@@ -1,6 +1,7 @@
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 import joblib
@@ -87,6 +88,31 @@ class LogisticRegressionModel:
 
     def save(self, path):
         joblib.dump(self.model, path)
+
+
+# ------------------------------------------------
+# Gaussian Naive Bayes Model
+# ------------------------------------------------
+class NaiveBayesModel:
+    def __init__(self):
+        self.model = None
+
+    def build(self):
+        self.model = GaussianNB()
+        return self.model
+
+    def train(self, X_train, y_train):
+        self.model.fit(X_train, y_train)
+
+    def predict(self, X_test):
+        return self.model.predict(X_test)
+
+    def predict_proba(self, X_test):
+        return self.model.predict_proba(X_test)[:, 1]
+
+    def save(self, path):
+        joblib.dump(self.model, path)
+
 # ------------------------------------------------
 # Random Forest Model
 # ------------------------------------------------
@@ -146,4 +172,4 @@ class XGBoostModel:
         return self.model.predict_proba(X_test)[:, 1]
 
     def save(self, path):
-        joblib.dump(self.model, path) 
+        joblib.dump(self.model, path)

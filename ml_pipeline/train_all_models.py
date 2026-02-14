@@ -3,7 +3,7 @@ import joblib
 
 from ml_pipeline.data_loader import BankMarketingLoader
 from ml_pipeline.feature_builder import FeaturePipelineBuilder
-from ml_pipeline.model_trainer import KNNModel, DecisionTreeModel, LogisticRegressionModel, RandomForestModel, XGBoostModel
+from ml_pipeline.model_trainer import KNNModel, DecisionTreeModel, LogisticRegressionModel, NaiveBayesModel, RandomForestModel, XGBoostModel
 from ml_pipeline.model_metrics import BinaryClassificationMetrics
 
 
@@ -51,7 +51,7 @@ def train_all_models():
     # 8. Save model and preprocessing pipeline
     os.makedirs("saved_models", exist_ok=True)
     knn.save("saved_models/knn_model.pkl")
-  
+
 
     # ------------------------------------------------
     # Decision Tree
@@ -94,6 +94,28 @@ def train_all_models():
         print(f"{k}: {v:.4f}")
 
     lr.save("saved_models/lr_model.pkl")
+    
+    # ==============================
+    # Naive Bayes
+    # ==============================
+    nb = NaiveBayesModel()
+    nb.build()
+    nb.train(X_train_transformed, y_train)
+
+    y_pred_nb = nb.predict(X_test_transformed)
+    y_prob_nb = nb.predict_proba(X_test_transformed)
+
+    metrics_nb = BinaryClassificationMetrics.evaluate(
+        y_test, y_pred_nb, y_prob_nb
+    )
+
+    print("\nNaive Bayes Metrics")
+    print("-" * 30)
+    for k, v in metrics_nb.items():
+        print(f"{k}: {v:.4f}")
+
+    nb.save("saved_models/nb_model.pkl")
+    
 
     # ==============================
     # Random Forest
@@ -133,7 +155,7 @@ def train_all_models():
     xgb.save("saved_models/xgb_model.pkl")
 
 
-    joblib.dump(pipeline, "saved_models/preprocessing_pipeline.pkl")   
+    joblib.dump(pipeline, "saved_models/preprocessing_pipeline.pkl")
 
 if __name__ == "__main__":
     train_all_models()
