@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import seaborn as sns
+import matplotlib.pyplot as plt
 from sklearn.metrics import (
     confusion_matrix,
-    classification_report,
     accuracy_score,
     precision_score,
     recall_score,
@@ -15,40 +16,41 @@ from sklearn.metrics import (
 # ---------------------------------
 # Page Configuration
 # ---------------------------------
-st.set_page_config(page_title="Bank Marketing ML Models", layout="wide")
+st.set_page_config(page_title="Bank Marketing ML Dashboard", layout="wide")
 
-st.title("📊 Bank Marketing Term Deposit Prediction")
+st.title("🏦 Bank Marketing Term Deposit Prediction Dashboard")
 st.write(
-    "Upload a test dataset and select a model to generate predictions. "
-    "Adjust the classification threshold to observe precision-recall tradeoff."
+    "Select a model, adjust classification threshold, and upload a test dataset "
+    "to generate predictions."
 )
 
 # ---------------------------------
-# Load Preprocessing Pipeline
+# Sidebar Controls
+# ---------------------------------
+st.sidebar.header("⚙️ Model Settings")
+
+model_option = st.sidebar.radio(
+    "Select Model",
+    ["KNN", "Decision Tree", "Logistic Regression", "Random Forest", "XGBoost"]
+)
+
+threshold = st.sidebar.slider(
+    "Classification Threshold",
+    0.1, 0.9, 0.5, 0.05
+)
+
+row_count = st.sidebar.slider(
+    "Rows to Display",
+    5, 100, 10
+)
+
+# ---------------------------------
+# Load Resources
 # ---------------------------------
 @st.cache_resource
 def load_pipeline():
     return joblib.load("saved_models/preprocessing_pipeline.pkl")
 
-pipeline = load_pipeline()
-
-# ---------------------------------
-# Model Selection Dropdown
-# ---------------------------------
-model_option = st.selectbox(
-    "Select Model",
-    (
-        "KNN",
-        "Decision Tree",
-        "Logistic Regression",
-        "Random Forest",
-        "XGBoost"
-    )
-)
-
-# ---------------------------------
-# Load Selected Model
-# ---------------------------------
 @st.cache_resource
 def load_model(model_name):
     model_paths = {
@@ -60,31 +62,36 @@ def load_model(model_name):
     }
     return joblib.load(model_paths[model_name])
 
+pipeline = load_pipeline()
 model = load_model(model_option)
-st.success(f"{model_option} loaded successfully ✅")
+
+st.sidebar.success(f"{model_option} Loaded Successfully")
+
+# ---------------------------------
+# GitHub Download Links
+# ---------------------------------
+st.markdown("### 📥 Download Sample Test Files")
+st.markdown(
+    """
+- 🔹 [Download Test Data WITH 'y' (For Metrics)](https://raw.githubusercontent.com/05385-beep/05385-bank-term-deposit-predictor/main/data/bank_test_data_with_y.csv)
+
+- 🔹 [Download Test Data WITHOUT 'y' (For Prediction)](https://raw.githubusercontent.com/05385-beep/05385-bank-term-deposit-predictor/main/data/bank_test_data_without_y.csv)
+"""
+)
+
+st.markdown("---")
 
 # ---------------------------------
 # File Upload
 # ---------------------------------
 uploaded_file = st.file_uploader(
-    "Upload CSV test dataset (semicolon separated)",
+    "Upload CSV Test Dataset (semicolon separated)",
     type=["csv"]
 )
 
 if uploaded_file is not None:
+
     test_df = pd.read_csv(uploaded_file, sep=";")
-
-    st.subheader("Uploaded Data Preview")
-
-    # Row Display Slider
-    row_count = st.slider(
-        "Select number of rows to display",
-        min_value=5,
-        max_value=min(len(test_df), 100),
-        value=min(10, len(test_df))
-    )
-
-    st.dataframe(test_df.head(row_count))
 
     # ---------------------------------
     # Feature Transformation
@@ -95,60 +102,69 @@ if uploaded_file is not None:
     # Probability Predictions
     # ---------------------------------
     probabilities = model.predict_proba(X_transformed)[:, 1]
-
-    # Threshold Slider
-    threshold = st.slider(
-        "Select Classification Threshold",
-        min_value=0.1,
-        max_value=0.9,
-        value=0.5,
-        step=0.05
-    )
-
-    # Apply Threshold
     predictions = (probabilities >= threshold).astype(int)
 
     # ---------------------------------
-    # Results DataFrame
+    # Prepare Results
     # ---------------------------------
     results_df = test_df.copy()
     results_df["Probability (%)"] = (probabilities * 100).round(2)
     results_df["Prediction"] = predictions
     results_df["Prediction"] = results_df["Prediction"].map({1: "Yes", 0: "No"})
 
-    st.subheader("Prediction Results")
-    st.dataframe(results_df.head(row_count))
-
     # ---------------------------------
-    # Evaluation Metrics (if y exists)
+    # Tabs Layout
     # ---------------------------------
-    if "y" in test_df.columns:
-        st.subheader("📈 Evaluation Metrics")
+    tab1, tab2, tab3 = st.tabs(["📄 Predictions", "📊 Metrics", "🔲 Confusion Matrix"])
 
-        y_true = test_df["y"].map({"yes": 1, "no": 0})
-        y_pred = predictions
+    # -----------------------------
+    # Tab 1: Predictions
+    # -----------------------------
+    with tab1:
+        st.subheader("Prediction Results")
+        st.dataframe(results_df.head(row_count))
 
-        acc = accuracy_score(y_true, y_pred)
-        prec = precision_score(y_true, y_pred)
-        rec = recall_score(y_true, y_pred)
-        f1 = f1_score(y_true, y_pred)
-        auc = roc_auc_score(y_true, probabilities)
-        mcc = matthews_corrcoef(y_true, y_pred)
+    # -----------------------------
+    # Tab 2: Metrics
+    # -----------------------------
+    with tab2:
+        if "y" in test_df.columns:
+            y_true = test_df["y"].map({"yes": 1, "no": 0})
+            y_pred = predictions
 
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Accuracy", f"{acc:.4f}")
-        col2.metric("Precision", f"{prec:.4f}")
-        col3.metric("Recall", f"{rec:.4f}")
+            acc = accuracy_score(y_true, y_pred)
+            prec = precision_score(y_true, y_pred)
+            rec = recall_score(y_true, y_pred)
+            f1 = f1_score(y_true, y_pred)
+            auc = roc_auc_score(y_true, probabilities)
+            mcc = matthews_corrcoef(y_true, y_pred)
 
-        col4, col5, col6 = st.columns(3)
-        col4.metric("F1 Score", f"{f1:.4f}")
-        col5.metric("AUC", f"{auc:.4f}")
-        col6.metric("MCC", f"{mcc:.4f}")
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Accuracy", f"{acc:.4f}")
+            col2.metric("Precision", f"{prec:.4f}")
+            col3.metric("Recall", f"{rec:.4f}")
 
-        st.subheader("Confusion Matrix")
-        cm = confusion_matrix(y_true, y_pred)
-        st.write(cm)
+            col4, col5, col6 = st.columns(3)
+            col4.metric("F1 Score", f"{f1:.4f}")
+            col5.metric("AUC", f"{auc:.4f}")
+            col6.metric("MCC", f"{mcc:.4f}")
+        else:
+            st.info("Upload dataset WITH 'y' column to view evaluation metrics.")
 
-        st.subheader("Classification Report")
-        report = classification_report(y_true, y_pred)
-        st.text(report)
+    # -----------------------------
+    # Tab 3: Confusion Matrix
+    # -----------------------------
+    with tab3:
+        if "y" in test_df.columns:
+            y_true = test_df["y"].map({"yes": 1, "no": 0})
+            cm = confusion_matrix(y_true, predictions)
+
+            fig, ax = plt.subplots()
+            sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", ax=ax)
+            ax.set_xlabel("Predicted")
+            ax.set_ylabel("Actual")
+            ax.set_title("Confusion Matrix")
+
+            st.pyplot(fig)
+        else:
+            st.info("Upload dataset WITH 'y' column to view confusion matrix.")
