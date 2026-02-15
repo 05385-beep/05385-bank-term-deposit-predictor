@@ -31,7 +31,7 @@ st.sidebar.header("⚙️ Model Settings")
 
 model_option = st.sidebar.radio(
     "Select Model",
-    ["KNN", "Decision Tree", "Logistic Regression", "Random Forest", "XGBoost"]
+    ["KNN", "Decision Tree", "Logistic Regression", "Naive Bayes", "Random Forest", "XGBoost"]
 )
 
 threshold = st.sidebar.slider(
@@ -41,7 +41,7 @@ threshold = st.sidebar.slider(
 
 row_count = st.sidebar.slider(
     "Rows to Display",
-    5, 100, 10
+    5, 500, 10
 )
 
 # ---------------------------------
@@ -49,16 +49,17 @@ row_count = st.sidebar.slider(
 # ---------------------------------
 @st.cache_resource
 def load_pipeline():
-    return joblib.load("saved_models/preprocessing_pipeline.pkl")
+    return joblib.load("model/preprocessing_pipeline.pkl")
 
 @st.cache_resource
 def load_model(model_name):
     model_paths = {
-        "KNN": "saved_models/knn_model.pkl",
-        "Decision Tree": "saved_models/dt_model.pkl",
-        "Logistic Regression": "saved_models/lr_model.pkl",
-        "Random Forest": "saved_models/rf_model.pkl",
-        "XGBoost": "saved_models/xgb_model.pkl"
+        "KNN": "model/knn_model.pkl",
+        "Decision Tree": "model/dt_model.pkl",
+        "Logistic Regression": "model/lr_model.pkl",
+        "Naive Bayes": "model/nb_model.pkl",
+        "Random Forest": "model/rf_model.pkl",
+        "XGBoost": "model/xgb_model.pkl"
     }
     return joblib.load(model_paths[model_name])
 
