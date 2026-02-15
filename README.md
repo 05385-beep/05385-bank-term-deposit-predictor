@@ -112,3 +112,21 @@ The app supports both:
 - Test datasets WITHOUT target column (for pure prediction)
 
 ---
+
+# Project Structure
+
+│
+├── streamlit_app.py
+├── requirements.txt
+├── README.md
+├── model/
+│ ├── knn_model.pkl
+│ ├── dt_model.pkl
+│ ├── lr_model.pkl
+│ ├── nb_model.pkl
+│ ├── rf_model.pkl
+│ ├── xgb_model.pkl
+│ └── preprocessing_pipeline.pkl
+└── ml_pipeline/ -- This has all python files appplicable for all the models. 
+
+
