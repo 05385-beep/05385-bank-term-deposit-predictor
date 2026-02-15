@@ -41,8 +41,9 @@ threshold = st.sidebar.slider(
 
 row_count = st.sidebar.slider(
     "Rows to Display",
-    5, 500, 10
+    5, 1000, 500
 )
+
 
 # ---------------------------------
 # Load Resources
@@ -118,25 +119,37 @@ if uploaded_file is not None:
     # ---------------------------------
     tab1, tab2, tab3 = st.tabs(["📄 Predictions", "📊 Metrics", "🔲 Confusion Matrix"])
 
-    # -----------------------------
-    # Tab 1: Predictions
-    # -----------------------------
-    with tab1:
-        st.subheader("Prediction Results")
+   # -----------------------------
+# Tab 1: Predictions
+# -----------------------------
+with tab1:
+    st.subheader("Prediction Results")
+
+    # Inform user about sorting
+    st.info("🔎 Table is default sorted to show 'Yes' predictions on top.")
+
     # Move Prediction and Probability to front
     cols = ["Prediction", "Probability (%)"] + \
-          [col for col in results_df.columns if col not in ["Prediction", "Probability (%)"]]
+           [col for col in results_df.columns if col not in ["Prediction", "Probability (%)"]]
 
-    styled_df = results_df[cols].head(row_count)
+    display_df = results_df[cols]
 
-    # Apply Styling
+    # Default sort: Yes first
+    display_df = display_df.sort_values(
+        by="Prediction",
+        ascending=False   # Yes comes before No (since Yes > No alphabetically)
+    )
+
+    display_df = display_df.head(row_count)
+
+    # Styling function
     def highlight_prediction(val):
         if val == "Yes":
             return "background-color: #d4edda; color: black;"
         else:
             return "background-color: #f8d7da; color: black;"
 
-    styled_df = styled_df.style \
+    styled_df = display_df.style \
         .applymap(highlight_prediction, subset=["Prediction"]) \
         .background_gradient(
             subset=["Probability (%)"],
@@ -144,6 +157,7 @@ if uploaded_file is not None:
         )
 
     st.dataframe(styled_df, use_container_width=True)
+
 
 
     # -----------------------------
