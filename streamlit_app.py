@@ -123,7 +123,28 @@ if uploaded_file is not None:
     # -----------------------------
     with tab1:
         st.subheader("Prediction Results")
-        st.dataframe(results_df.head(row_count))
+# Move Prediction and Probability to front
+cols = ["Prediction", "Probability (%)"] + \
+       [col for col in results_df.columns if col not in ["Prediction", "Probability (%)"]]
+
+styled_df = results_df[cols].head(row_count)
+
+# Apply Styling
+def highlight_prediction(val):
+    if val == "Yes":
+        return "background-color: #d4edda; color: black;"
+    else:
+        return "background-color: #f8d7da; color: black;"
+
+styled_df = styled_df.style \
+    .applymap(highlight_prediction, subset=["Prediction"]) \
+    .background_gradient(
+        subset=["Probability (%)"],
+        cmap="YlGn"
+    )
+
+st.dataframe(styled_df, use_container_width=True)
+
 
     # -----------------------------
     # Tab 2: Metrics
